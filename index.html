@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef1f8">
+<title>Лексика — тренажёр слов</title>
+<style>
+  :root{
+    --bg:#eef1f8;
+    --surface:#ffffff;
+    --surface-2:#f6f7fc;
+    --text:#1e2433;
+    --muted:#6c7690;
+    --border:#dfe4f0;
+    --accent:#5b6ee1;
+    --accent-2:#8b9bf5;
+    --accent-soft:#eaedfd;
+    --ok:#2fb37a;
+    --ok-soft:#e3f7ee;
+    --err:#e05555;
+    --err-soft:#fdeaea;
+    --warn:#c08a1e;
+    --radius:18px;
+    --shadow:0 6px 24px rgba(40,50,90,.08), 0 1px 3px rgba(40,50,90,.06);
+  }
+
+  *{box-sizing:border-box;}
+  [hidden]{display:none !important;}
+
+  html,body{height:100%;}
+
+  body{
+    margin:0;
+    min-height:100vh;
+    min-height:100dvh;
+    padding:24px 16px 56px;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -webkit-text-size-adjust:100%;
+    background:
+      radial-gradient(1100px 560px at 8% -12%, #e6ecff 0%, transparent 60%),
+      radial-gradient(900px 480px at 100% 0%, #e6f7f0 0%, transparent 55%),
+      var(--bg);
+  }
+
+  .app{max-width:760px;margin:0 auto;}
+
+  /* ---------- header ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;}
+  .brand{display:flex;align-items:center;gap:12px;min-width:0;}
+  .logo{
+    width:42px;height:42px;flex:0 0 auto;border-radius:13px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:#fff;font-weight:700;font-size:19px;
+    display:grid;place-items:center;
+    box-shadow:0 6px 16px rgba(91,110,225,.28);
+  }
+  .brand h1{margin:0;font-size:19px;font-weight:700;letter-spacing:-.01em;}
+  .brand p{margin:1px 0 0;font-size:12.5px;color:var(--muted);}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    font-family:inherit;font-size:15px;font-weight:600;
+    border-radius:12px;border:none;padding:13px 20px;
+    cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    transition:transform .12s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn:disabled{opacity:.45;cursor:default;transform:none;}
+
+  .btn-primary{
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:#fff;box-shadow:0 6px 16px rgba(91,110,225,.28);
+  }
+  .btn-primary:hover:not(:disabled){box-shadow:0 9px 22px rgba(91,110,225,.36);}
+
+  .btn-ghost{background:var(--surface-2);color:var(--muted);border:1.5px solid var(--border);}
+  .btn-ghost:hover:not(:disabled){background:#eef1fa;color:var(--text);}
+
+  .btn-ok{background:var(--ok);color:#fff;box-shadow:0 6px 16px rgba(47,179,122,.26);}
+  .btn-ok:hover:not(:disabled){box-shadow:0 9px 22px rgba(47,179,122,.34);}
+
+  .btn-err{background:#fff;color:var(--err);border:1.5px solid #f0c9c9;}
+  .btn-err:hover:not(:disabled){background:var(--err-soft);}
+
+  .btn-sm{padding:9px 15px;font-size:13.5px;border-radius:10px;}
+
+  /* ---------- screens ---------- */
+  .screen{display:none;}
+  .screen.active{display:block;animation:fadeUp .32s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .panel{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;
+  }
+
+  /* ---------- stage head / progress ---------- */
+  .stage-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;}
+  .stage-badge{
+    font-size:12.5px;font-weight:700;color:var(--accent);
+    background:var(--accent-soft);padding:6px 13px;border-radius:999px;
+    letter-spacing:.01em;
+  }
+  .counter{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+
+  .progress{height:8px;border-radius:99px;background:#e5e9f4;overflow:hidden;margin-bottom:22px;}
+  .progress-fill{
+    height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    transition:width .35s cubic-bezier(.4,.1,.2,1);
+  }
+
+  /* ---------- flashcards ---------- */
+  .flashcard{perspective:1400px;margin-bottom:20px;}
+  .flashcard-inner{
+    position:relative;width:100%;
+    height:clamp(250px, 46vh, 340px);
+    transform-style:preserve-3d;
+    -webkit-transform-style:preserve-3d;
+    transition:transform .55s cubic-bezier(.4,.15,.2,1);
+    cursor:pointer;
+  }
+  .flashcard-inner.flipped{transform:rotateY(180deg);}
+  .flashcard-inner.no-transition{transition:none;}
+
+  .face{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;padding:28px;text-align:center;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:22px;box-shadow:var(--shadow);
+    backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    overflow:hidden;
+  }
+  .face-back{
+    transform:rotateY(180deg);
+    background:linear-gradient(160deg,#f8faff,#edf1ff);
+  }
+  .face-label{
+    font-size:11.5px;font-weight:800;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .face-text{
+    font-size:clamp(22px,5vw,32px);font-weight:650;line-height:1.3;
+    word-break:break-word;overflow:auto;min-height:0;max-width:100%;max-height:100%;
+    -webkit-overflow-scrolling:touch;
+  }
+  .face-text.long{
+    width:100%;
+    align-self:stretch;
+    font-size:clamp(15px,3.7vw,20px);
+    font-weight:500;
+    line-height:1.45;
+    text-align:left;
+  }
+  .face-main{display:block;}
+  .face-example{
+    display:block;
+    margin-top:12px;
+    font-size:.88em;
+    font-style:italic;
+    font-weight:500;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .flip-hint{font-size:12px;color:#a8b0c6;}
+
+  .flash-actions{display:flex;gap:12px;}
+  .flash-actions > div{display:flex;gap:12px;width:100%;}
+  .flash-actions .btn{flex:1;padding:15px;}
+
+  /* ---------- choice stage ---------- */
+  .prompt-card{
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    padding:32px 24px;margin-bottom:18px;text-align:center;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:22px;box-shadow:var(--shadow);
+  }
+  .prompt-text{
+    font-size:clamp(20px,4.6vw,28px);font-weight:650;line-height:1.3;
+    word-break:break-word;
+    white-space:pre-line;
+  }
+  .prompt-text.long{
+    font-size:clamp(15px,3.6vw,20px);
+    font-weight:500;
+    line-height:1.45;
+    text-align:left;
+  }
+
+  .options{display:grid;gap:10px;}
+  .option{
+    display:flex;align-items:center;gap:14px;width:100%;
+    padding:16px 18px;text-align:left;
+    border-radius:14px;border:1.5px solid var(--border);
+    background:var(--surface);color:var(--text);
+    font-family:inherit;font-size:16px;font-weight:500;
+    cursor:pointer;transition:all .15s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .option:hover:not(:disabled){border-color:var(--accent-2);background:#f8f9ff;transform:translateY(-1px);}
+  .option:disabled{cursor:default;}
+  .option-key{
+    flex:0 0 26px;height:26px;border-radius:8px;
+    background:var(--surface-2);color:var(--muted);
+    display:grid;place-items:center;font-size:12.5px;font-weight:800;
+    transition:all .15s;
+  }
+  .option-text{flex:1;word-break:break-word;line-height:1.35;}
+  .option.correct{border-color:var(--ok);background:var(--ok-soft);color:#1c7a52;}
+  .option.correct .option-key{background:var(--ok);color:#fff;}
+  .option.wrong{border-color:var(--err);background:var(--err-soft);color:#a83c3c;}
+  .option.wrong .option-key{background:var(--err);color:#fff;}
+
+  /* ---------- typing stage ---------- */
+  .slots{
+    display:flex;flex-wrap:wrap;justify-content:center;
+    gap:8px;margin-bottom:18px;min-height:48px;
+  }
+  .slot{
+    width:clamp(28px,6vw,38px);height:clamp(38px,8vw,48px);
+    border-radius:10px;border:1.5px dashed #ccd4e6;background:var(--surface-2);
+    display:grid;place-items:center;
+    font-size:clamp(16px,4vw,20px);font-weight:700;color:var(--text);
+    transition:all .15s ease;
+  }
+  .slot.filled{
+    border-style:solid;border-color:var(--accent-2);background:#fff;
+    box-shadow:0 2px 8px rgba(91,110,225,.14);
+  }
+  .slot-gap{width:clamp(8px,2vw,14px);}
+
+  .type-form{display:flex;gap:10px;margin-bottom:14px;}
+  .type-input{flex:1;font-size:17px;text-align:center;letter-spacing:.04em;}
+  .type-form .btn{flex:0 0 auto;}
+
+  .input{
+    width:100%;padding:13px 14px;border-radius:12px;
+    border:1.5px solid var(--border);background:var(--surface-2);
+    font-family:inherit;font-size:15px;color:var(--text);outline:none;
+    transition:border-color .15s, background .15s, box-shadow .15s;
+  }
+  .input::placeholder{color:#a4adc4;}
+  .input:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 4px var(--accent-soft);}
+
+  .type-foot{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;}
+  .hint-note{font-size:12.5px;color:var(--warn);font-weight:600;}
+
+  .feedback{
+    min-height:22px;margin-top:16px;text-align:center;
+    font-size:14.5px;font-weight:650;transition:color .15s;
+  }
+  .feedback.ok{color:var(--ok);}
+  .feedback.err{color:var(--err);}
+  .feedback.warn{color:var(--warn);}
+
+  /* ---------- done ---------- */
+  .done-card{
+    padding:52px 28px;text-align:center;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:24px;box-shadow:var(--shadow);
+  }
+  .done-icon{font-size:54px;line-height:1;margin-bottom:12px;}
+  .done-card h2{margin:0 0 8px;font-size:22px;font-weight:750;}
+  .done-card p{margin:0 0 26px;color:var(--muted);font-size:14.5px;}
+  .done-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:560px){
+    body{padding:16px 12px 40px;}
+    .face{padding:20px;}
+    .prompt-card{padding:26px 18px;}
+    .type-form{flex-direction:column;}
+    .type-form .btn{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">Л</div>
+      <div>
+        <h1>Лексика</h1>
+        <p>Карточки → выбор → ввод</p>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="btnReset" hidden>Заново</button>
+  </header>
+
+  <!-- ================= ЭТАП 1: КАРТОЧКИ ================= -->
+  <section class="screen active" id="screen-flash">
+    <div class="stage-head">
+      <span class="stage-badge">Этап 1 · Карточки</span>
+      <span class="counter" id="flashCounter">0 / 0</span>
+    </div>
+    <div class="progress"><div class="progress-fill" id="flashProgress"></div></div>
+
+    <div class="flashcard" id="flashcard">
+      <div class="flashcard-inner" id="cardInner">
+        <div class="face face-front">
+          <span class="face-label" id="cardLabelFront">Слово</span>
+          <div class="face-text" id="cardFront"></div>
+          <span class="flip-hint">нажмите на карточку, чтобы перевернуть</span>
+        </div>
+        <div class="face face-back">
+          <span class="face-label" id="cardLabelBack">Определение и пример</span>
+          <div class="face-text" id="cardBack"></div>
+          <span class="flip-hint">нажмите, чтобы вернуться</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flash-actions">
+      <div id="actionsFlip">
+        <button class="btn btn-primary" id="btnFlip" type="button">Перевернуть карточку</button>
+      </div>
+      <div id="actionsKnow" hidden>
+        <button class="btn btn-err" id="btnDontKnow" type="button">Не знаю</button>
+        <button class="btn btn-ok" id="btnKnow" type="button">Знаю</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ЭТАП 2: ВЫБОР ВАРИАНТА ================= -->
+  <section class="screen" id="screen-choice">
+    <div class="stage-head">
+      <span class="stage-badge">Этап 2 · Выбор варианта</span>
+      <span class="counter" id="choiceCounter">0 / 0</span>
+    </div>
+    <div class="progress"><div class="progress-fill" id="choiceProgress"></div></div>
+
+    <div class="prompt-card">
+      <span class="face-label" id="choiceLabel">Слово</span>
+      <div class="prompt-text" id="choicePrompt"></div>
+    </div>
+
+    <div class="options" id="options"></div>
+  </section>
+
+  <!-- ================= ЭТАП 3: ВВОД СЛОВА ================= -->
+  <section class="screen" id="screen-type">
+    <div class="stage-head">
+      <span class="stage-badge">Этап 3 · Ввод слова</span>
+      <span class="counter" id="typeCounter">0 / 0</span>
+    </div>
+    <div class="progress"><div class="progress-fill" id="typeProgress"></div></div>
+
+    <div class="prompt-card">
+      <span class="face-label">Определение и пример</span>
+      <div class="prompt-text" id="typePrompt"></div>
+    </div>
+
+    <div class="slots" id="slots"></div>
+
+    <form class="type-form" id="typeForm" autocomplete="off">
+      <input class="input type-input" id="typeInput" type="text"
+             autocomplete="off" autocapitalize="off" autocorrect="off"
+             spellcheck="false" placeholder="Введите слово">
+      <button class="btn btn-primary" id="btnCheck" type="button">Проверить</button>
+    </form>
+
+    <div class="type-foot">
+      <button class="btn btn-ghost btn-sm" id="btnHint" type="button">Подсказка (первая буква)</button>
+      <span class="hint-note" id="hintNote"></span>
+    </div>
+
+    <div class="feedback" id="typeFeedback"></div>
+  </section>
+
+  <!-- ================= ФИНАЛ ================= -->
+  <section class="screen" id="screen-done">
+    <div class="done-card">
+      <div class="done-icon">🎉</div>
+      <h2>Отлично! Все слова пройдены</h2>
+      <p>Вы прошли все три этапа. Можно повторить, чтобы закрепить результат.</p>
+      <div class="done-actions">
+        <button class="btn btn-primary" id="btnAgain" type="button">Пройти заново</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ==================== СПИСОК СЛОВ ==================== */
+  const WORDS = [
+    {
+      term: 'ability to take risks',
+      def: 'being able to do something even if it might be dangerous or uncertain.',
+      example: 'She had the a_____ t_ t____ r_____ and turned her passion into a successful career.'
+    },
+    {
+      term: 'clear focus',
+      def: 'you have this when you know exactly what you want to achieve and how you are going to get it.',
+      example: 'I need to have a c_____ f_____ on my goals in order to be successful.'
+    },
+    {
+      term: 'determination',
+      def: 'the quality that makes you continue trying to do something even when this is difficult',
+      example: 'He succeeded by hard work and sheer d_____________.'
+    },
+    {
+      term: 'financial security',
+      def: 'having enough money to support yourself and your needs.',
+      example: 'I want to find a career that will allow me to achieve f_______ s______ and stability.'
+    },
+    {
+      term: 'hard work',
+      def: 'putting in effort and time into your tasks or job.',
+      example: 'H____ w____ is key to achieving success in any career path'
+    },
+    {
+      term: 'innate ability',
+      def: 'the ability a person was born with',
+      example: 'Children have an i________ a___________ to learn language.'
+    },
+    {
+      term: 'luck',
+      def: 'good things that happen to you by chance, not because of your own efforts or abilities',
+      example: 'So far I have had no l_____ with finding a job.'
+    },
+    {
+      term: 'ruthlessness',
+      def: 'hard and cruel behaviour; being determined to get what you want without caring if you hurt other people',
+      example: 'Tyson gained a reputation for r__________.'
+    },
+    {
+      term: 'self-confidence',
+      def: 'confidence in yourself and your abilities',
+      example: 'He constantly tried to undermine her s_____-c_________.'
+    },
+    {
+      term: 'supportive family',
+      def: 'a family who cares about you and helps you when you need it.',
+      example: 'Thanks to her s_______ f______, she was able to overcome challenges and succeed in her career.'
+    }
+  ];
+
+  /* ==================== УТИЛИТЫ ==================== */
+  const $  = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  const shuffle = arr => {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  const normalize = s => String(s).toLowerCase().replace(/\s+/g, ' ').trim();
+
+  /* ==================== СОСТОЯНИЕ ==================== */
+  const state = {
+    words: WORDS,
+    queue1: [],
+    queue2: [],
+    queue3: [],
+    total1: 0,
+    total2: 0,
+    total3: 0,
+    cardFlipped: false,
+    hintUsed: false,
+    locked: false
+  };
+
+  /* ==================== ЭКРАНЫ ==================== */
+  function showScreen(name) {
+    $$('.screen').forEach(s => s.classList.remove('active'));
+    const el = $('#screen-' + name);
+    if (el) el.classList.add('active');
+    $('#btnReset').hidden = !['flash', 'choice', 'type'].includes(name);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function setProgress(barSel, counterSel, done, total) {
+    $(barSel).style.width = (total ? Math.round(done / total * 100) : 0) + '%';
+    $(counterSel).textContent = done + ' / ' + total;
+  }
+
+  /* ==================== ЭТАП 1: КАРТОЧКИ ==================== */
+  function startStage1() {
+    const passA = state.words.map((_, i) => ({ i, dir: 0 }));
+    const passB = state.words.map((_, i) => ({ i, dir: 1 }));
+    state.queue1 = shuffle(passA).concat(shuffle(passB));
+    state.total1 = state.queue1.length;
+    state.locked = false;
+    showScreen('flash');
+    renderCard();
+  }
+
+  function setFlipped(value, animate = true) {
+    const inner = $('#cardInner');
+    if (!animate) inner.classList.add('no-transition');
+    inner.classList.toggle('flipped', value);
+    if (!animate) {
+      void inner.offsetWidth;
+      inner.classList.remove('no-transition');
+    }
+    state.cardFlipped = value;
+    $('#actionsFlip').hidden = value;
+    $('#actionsKnow').hidden = !value;
+  }
+
+  function setFaceContent(el, main, example) {
+    el.innerHTML = '';
+
+    const mainEl = document.createElement('span');
+    mainEl.className = 'face-main';
+    mainEl.textContent = main;
+    el.appendChild(mainEl);
+
+    if (example) {
+      const exEl = document.createElement('span');
+      exEl.className = 'face-example';
+      exEl.textContent = example;
+      el.appendChild(exEl);
+    }
+
+    el.classList.toggle('long', Boolean(example));
+  }
+
+  function renderCard() {
+    if (!state.queue1.length) {
+      startStage2();
+      return;
+    }
+
+    const { i, dir } = state.queue1[0];
+    const w = state.words[i];
+
+    if (dir === 0) {
+      setFaceContent($('#cardFront'), w.term, null);
+      setFaceContent($('#cardBack'), w.def, w.example);
+      $('#cardLabelFront').textContent = 'Слово';
+      $('#cardLabelBack').textContent = 'Определение и пример';
+    } else {
+      setFaceContent($('#cardFront'), w.def, w.example);
+      setFaceContent($('#cardBack'), w.term, null);
+      $('#cardLabelFront').textContent = 'Определение и пример';
+      $('#cardLabelBack').textContent = 'Слово';
+    }
+
+    setFlipped(false, false);
+    setProgress(
+      '#flashProgress',
+      '#flashCounter',
+      state.total1 - state.queue1.length,
+      state.total1
+    );
+  }
+
+  $('#flashcard').addEventListener('click', () => setFlipped(!state.cardFlipped));
+  $('#btnFlip').addEventListener('click', e => {
+    e.stopPropagation();
+    setFlipped(true);
+  });
+
+  $('#btnKnow').addEventListener('click', () => {
+    state.queue1.shift();
+    renderCard();
+  });
+
+  $('#btnDontKnow').addEventListener('click', () => {
+    const item = state.queue1.shift();
+    const pos = Math.min(3, state.queue1.length);
+    state.queue1.splice(pos, 0, item);
+    renderCard();
+  });
+
+  /* ==================== ЭТАП 2: ВЫБОР ВАРИАНТА ==================== */
+  function startStage2() {
+    if (state.words.length < 2) {
+      startStage3();
+      return;
+    }
+
+    state.queue2 = shuffle(state.words.map((_, i) => ({ i })));
+    state.total2 = state.queue2.length;
+    state.locked = false;
+    showScreen('choice');
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    if (!state.queue2.length) {
+      startStage3();
+      return;
+    }
+
+    const w = state.words[state.queue2[0].i];
+    const dir = Math.random() < 0.5 ? 0 : 1;
+
+    const promptText = dir === 0 ? w.term : w.def;
+    const correctText = dir === 0 ? w.def : w.term;
+    const label = dir === 0 ? 'Слово' : 'Определение';
+
+    const correctKey = normalize(correctText);
+    const pool = state.words
+      .filter(x => x !== w)
+      .map(x => (dir === 0 ? x.def : x.term))
+      .filter(t => normalize(t) !== correctKey);
+
+    const unique = [...new Set(pool)];
+    const distractors = shuffle(unique).slice(0, 3);
+    const options = shuffle([correctText].concat(distractors));
+
+    $('#choiceLabel').textContent = label;
+    $('#choicePrompt').textContent = promptText;
+    $('#choicePrompt').classList.toggle('long', dir === 1);
+
+    const optionsEl = $('#options');
+    optionsEl.innerHTML = '';
+
+    options.forEach((text, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'option';
+
+      const key = document.createElement('span');
+      key.className = 'option-key';
+      key.textContent = String(idx + 1);
+
+      const label2 = document.createElement('span');
+      label2.className = 'option-text';
+      label2.textContent = text;
+
+      btn.append(key, label2);
+      if (normalize(text) === correctKey) btn.dataset.correct = '1';
+      btn.addEventListener('click', () => handleChoice(btn));
+      optionsEl.appendChild(btn);
+    });
+
+    setProgress(
+      '#choiceProgress',
+      '#choiceCounter',
+      state.total2 - state.queue2.length,
+      state.total2
+    );
+  }
+
+  function handleChoice(btn) {
+    if (state.locked) return;
+    state.locked = true;
+
+    const all = Array.from($('#options').children);
+    all.forEach(o => { o.disabled = true; });
+
+    if (btn.dataset.correct === '1') {
+      btn.classList.add('correct');
+      setTimeout(() => {
+        state.queue2.shift();
+        state.locked = false;
+        renderQuestion();
+      }, 620);
+    } else {
+      btn.classList.add('wrong');
+      all.forEach(o => {
+        if (o.dataset.correct === '1') o.classList.add('correct');
+      });
+      setTimeout(() => {
+        const item = state.queue2.shift();
+        const pos = Math.min(2, state.queue2.length);
+        state.queue2.splice(pos, 0, item);
+        state.locked = false;
+        renderQuestion();
+      }, 1500);
+    }
+  }
+
+  /* ==================== ЭТАП 3: ВВОД СЛОВА ==================== */
+  function startStage3() {
+    state.queue3 = shuffle(state.words.map((_, i) => ({ i })));
+    state.total3 = state.queue3.length;
+    state.locked = false;
+    showScreen('type');
+    renderTyping();
+  }
+
+  function renderTyping() {
+    if (!state.queue3.length) {
+      finish();
+      return;
+    }
+
+    const w = state.words[state.queue3[0].i];
+
+    state.hintUsed = false;
+    state.locked = false;
+
+    const promptEl = $('#typePrompt');
+    promptEl.textContent = w.def + '\n\n' + w.example;
+    promptEl.classList.add('long');
+
+    $('#typeInput').value = '';
+    $('#btnHint').disabled = false;
+    $('#hintNote').textContent = '';
+
+    const fb = $('#typeFeedback');
+    fb.textContent = '';
+    fb.className = 'feedback';
+
+    updateSlots();
+    setProgress(
+      '#typeProgress',
+      '#typeCounter',
+      state.total3 - state.queue3.length,
+      state.total3
+    );
+
+    $('#typeInput').focus();
+  }
+
+  function updateSlots() {
+    if (!state.queue3.length) return;
+
+    const answer = state.words[state.queue3[0].i].term;
+    const typed = $('#typeInput').value;
+    const slotsEl = $('#slots');
+    slotsEl.innerHTML = '';
+
+    for (let i = 0; i < answer.length; i++) {
+      if (answer[i] === ' ') {
+        const gap = document.createElement('span');
+        gap.className = 'slot-gap';
+        slotsEl.appendChild(gap);
+        continue;
+      }
+
+      const slot = document.createElement('span');
+      slot.className = 'slot';
+      const ch = typed[i];
+
+      if (ch && ch !== ' ') {
+        slot.textContent = ch;
+        slot.classList.add('filled');
+      }
+
+      slotsEl.appendChild(slot);
+    }
+  }
+
+  function showFeedback(text, kind) {
+    const fb = $('#typeFeedback');
+    fb.textContent = text;
+    fb.className = 'feedback ' + (kind || '');
+  }
+
+  function checkTypedAnswer() {
+    if (state.locked || !state.queue3.length) return;
+
+    const item = state.queue3[0];
+    const w = state.words[item.i];
+    const value = normalize($('#typeInput').value);
+
+    if (!value) {
+      showFeedback('Введите слово', 'err');
+      return;
+    }
+
+    state.locked = true;
+
+    if (value === normalize(w.term)) {
+      if (state.hintUsed) {
+        showFeedback('Верно! Но с подсказкой — это слово встретится ещё раз.', 'warn');
+        setTimeout(() => {
+          state.queue3.shift();
+          state.queue3.splice(Math.min(2, state.queue3.length), 0, item);
+          renderTyping();
+        }, 1300);
+      } else {
+        showFeedback('Верно!', 'ok');
+        setTimeout(() => {
+          state.queue3.shift();
+          renderTyping();
+        }, 750);
+      }
+    } else {
+      showFeedback('Пока не то. Правильно: ' + w.term, 'err');
+      setTimeout(() => {
+        state.queue3.shift();
+        state.queue3.splice(Math.min(2, state.queue3.length), 0, item);
+        renderTyping();
+      }, 1700);
+    }
+  }
+
+  $('#typeInput').addEventListener('input', updateSlots);
+  $('#btnCheck').addEventListener('click', checkTypedAnswer);
+
+  $('#typeInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      checkTypedAnswer();
+    }
+  });
+
+  $('#typeForm').addEventListener('submit', e => {
+    e.preventDefault();
+    checkTypedAnswer();
+  });
+
+  $('#btnHint').addEventListener('click', () => {
+    if (state.locked || !state.queue3.length) return;
+
+    const w = state.words[state.queue3[0].i];
+    const input = $('#typeInput');
+
+    state.hintUsed = true;
+    input.value = w.term.charAt(0);
+    updateSlots();
+    input.focus();
+
+    try {
+      input.setSelectionRange(input.value.length, input.value.length);
+    } catch (err) {}
+
+    $('#btnHint').disabled = true;
+    $('#hintNote').textContent = 'Подсказка использована — слово нужно будет повторить.';
+  });
+
+  /* ==================== ФИНАЛ ==================== */
+  function finish() {
+    state.locked = false;
+    showScreen('done');
+  }
+
+  $('#btnAgain').addEventListener('click', startStage1);
+
+  $('#btnReset').addEventListener('click', () => {
+    startStage1();
+  });
+
+  /* ==================== КЛАВИАТУРА ==================== */
+  document.addEventListener('keydown', e => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return;
+
+    const active = document.querySelector('.screen.active');
+    if (!active) return;
+
+    if (active.id === 'screen-flash') {
+      if (e.code === 'Space' || e.key === 'Enter') {
+        e.preventDefault();
+        setFlipped(!state.cardFlipped);
+      } else if (state.cardFlipped && e.key === '1') {
+        $('#btnDontKnow').click();
+      } else if (state.cardFlipped && e.key === '2') {
+        $('#btnKnow').click();
+      }
+    }
+
+    if (active.id === 'screen-choice') {
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= 4) {
+        const opts = $$('#options .option');
+        if (opts[n - 1] && !opts[n - 1].disabled) opts[n - 1].click();
+      }
+    }
+  });
+
+  /* ==================== СТАРТ ==================== */
+  startStage1();
+})();
+</script>
+</body>
+</html>
